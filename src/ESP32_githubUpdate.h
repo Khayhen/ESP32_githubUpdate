@@ -106,6 +106,7 @@ public:
 
 
     t_httpUpdate_return git_update(const String& file);
+    String getVersion(String _filename);
     void setCertificate(String cert);
     void setToken(String _token);
     void setRepo(String _repo);
@@ -113,6 +114,7 @@ public:
 
 protected:
     t_httpUpdate_return handleUpdate(HTTPClient& http, const String& currentVersion, bool spiffs = false);
+    String handleVersion(HTTPClient& http);
     bool runUpdate(Stream& in, uint32_t size, String md5, int command = U_FLASH);
 
     int _lastError;
@@ -121,7 +123,7 @@ protected:
     String certificate;
     String token; 
     String repo;
-    String fileDir;
+    String fileDir = "";
 };
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_HTTPUPDATE)

@@ -24,6 +24,7 @@
  */
 
 #include "ESP32_githubUpdate.h"
+#include <ArduinoJSON.h>
 #include <StreamString.h>
 
 ESP32githubUpdate::ESP32githubUpdate(void)
@@ -174,6 +175,14 @@ t_httpUpdate_return ESP32githubUpdate::git_update(const String& file){
     String url = "https://api.github.com/repos/" + repo + "/contents/" + fileDir + file;
     http.begin(url, cacert);
     return handleUpdate(http, "", false);
+}
+
+String ESP32githubUpdate::getVersion(String _filename){
+    HTTPClient http;
+    const char *cacert = strdup(certificate.c_str());
+    String url = "https://api.github.com/repos/" + repo + "/contents/" + _filename;
+    http.begin(url, cacert);
+    return handleVersion(http);
 }
 
 void ESP32githubUpdate::setCertificate(String cert){
@@ -450,6 +459,34 @@ bool ESP32githubUpdate::runUpdate(Stream &in, uint32_t size, String md5, int com
     }
 
     return true;
+}
+
+String ESP32githubUpdate::handleVersion(HTTPClient& http){
+    http.useHTTP10(true);
+    http.setTimeout(30000); // allow time to download on slower networks
+    http.setUserAgent(F("ESP32-http-versionGet"));
+    if(gitHub_private){
+        http.addHeader(F("Accept"), "application/vnd.github.v3.raw");
+        http.addHeader(F("authorization"), "Bearer " + token);
+    }
+    // Send HTTP POST request
+    int httpResponseCode = http.GET();
+
+    String payload = "{}"; 
+
+    if (httpResponseCode>0) {
+    Serial.print("[HTTP] Response code: ");
+    Serial.println(httpResponseCode);
+    payload = http.getString();
+    }
+    else {
+    Serial.print("[HTTP] Error code: ");
+    Serial.println(httpResponseCode);
+    }
+    // Free resources
+    http.end();
+
+    return payload;
 }
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_HTTPUPDATE)
